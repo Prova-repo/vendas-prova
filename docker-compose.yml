@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "SenhaGrandeParaTeste@123"
+    ports:
+      - "1433:1433"
+    networks:
+      - vendas-net
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vendas-api
+    restart: always
+    depends_on:
+        - sqlserver
+    command: ["dotnet", "Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Release
+      ConnectionStrings__DefaultConnection: "Server=sqlserver-db,1433;Database=VendasDb;User Id=sa;Password=SenhaGrandeParaTeste@123;Encrypt=False;"
+    ports:
+      - "5000:8080"
+      - "5001:8081" 
+    networks:
+      - vendas-net
+
+networks:
+  vendas-net:
+    driver: bridge
+
+volumes:
+  mssql_data:
+    driver: local
